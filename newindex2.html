@@ -1,0 +1,388 @@
+<!DOCTYPE HTML>
+<html>
+<title>Trump Sentiment Tracker</title>
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=320" />
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Merriweather" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>Gauge</title>
+	<script type="text/javascript" src="http://d3js.org/d3.v2.min.js"></script>
+	<style>
+	body {
+		font-family:  Merriweather-900;
+		margin: 20px;
+        font-size: 30px;
+        text-align:center;
+        font-weight: bold;
+        background-color: whitesmoke;
+	}
+
+    h1 {
+		font-family:  Merriweather-900;
+        font-weight:  bold;
+        font-size: 75px;
+        text-align:center;
+        font-weight: bold;
+        color: #333333;
+        margin-top: 40px;
+        margin-bottom: 8px;
+	}
+
+    h4 {
+		font-family: "Helvetica Neue" ;
+        font-size: 20px;
+        text-align:center;
+        color: #777777;
+        font-weight: 400;
+        margin-top: 0px;
+        margin-bottom: 40px;
+	}
+
+    h2 {
+		font-family: "Helvetica Neue" ;
+        font-size: 30px;
+        text-align:left;
+        color: #333333;
+        font-weight: 500;
+        margin-top: 25px;
+        margin-bottom: 0px;
+	}
+
+    p {
+		font-family: "Helvetica Neue" ;
+        font-size: 20px;
+        text-align:left;
+        color: #777777;
+        font-weight: 400;
+        margin-top: 5px;
+        margin-bottom: 0px;
+        margin-right: 26px;
+	}
+
+	#power-gauge g.arc {
+		fill: steelblue;
+        margin-bottom: 0px;
+	}
+
+	#power-gauge g.pointer {
+		fill: #777777;
+		stroke: #777777;
+	}
+
+	#power-gauge g.label text {
+		text-anchor: middle;
+        font-family: Sans-Serif;
+		font-size: 14px;
+		font-weight: bold;
+		fill: #666;
+	}
+
+    #description {
+        color: #333333;
+        text-align: center;
+    }
+        
+    #bar {
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:15px;
+        background-color: #A80000;
+    }
+
+	</style>
+
+<script>
+var gauge = function(container, configuration) {
+	var that = {};
+	var config = {
+		size						: 200,
+		clipWidth					: 200,
+		clipHeight					: 110,
+		ringInset					: 20,
+		ringWidth					: 20,
+
+		pointerWidth				: 10,
+		pointerTailLength			: 5,
+		pointerHeadLengthPercent	: 0.9,
+
+		minValue					: -0.2,
+		maxValue					: 0.2,
+
+		minAngle					: -90,
+		maxAngle					: 90,
+
+		transitionMs				: 750,
+
+		majorTicks					: 5,
+		labelFormat					: d3.format(',g'),
+		labelInset					: 10,
+
+		arcColorFn					: d3.interpolateHsl(d3.rgb('#ff3333'), d3.rgb('#009900'))
+	};
+	var range = undefined;
+	var r = undefined;
+	var pointerHeadLength = undefined;
+	var value = 0;
+
+	var svg = undefined;
+	var arc = undefined;
+	var scale = undefined;
+	var ticks = undefined;
+	var tickData = undefined;
+	var pointer = undefined;
+
+	var donut = d3.layout.pie();
+
+	function deg2rad(deg) {
+		return deg * Math.PI / 180;
+	}
+
+	function newAngle(d) {
+		var ratio = scale(d);
+		var newAngle = config.minAngle + (ratio * range);
+		return newAngle;
+	}
+
+	function configure(configuration) {
+		var prop = undefined;
+		for ( prop in configuration ) {
+			config[prop] = configuration[prop];
+		}
+
+		range = config.maxAngle - config.minAngle;
+		r = config.size / 2;
+		pointerHeadLength = Math.round(r * config.pointerHeadLengthPercent);
+
+		// a linear scale that maps domain values to a percent from 0..1
+		scale = d3.scale.linear()
+			.range([0,1])
+			.domain([config.minValue, config.maxValue]);
+
+		ticks = scale.ticks(config.majorTicks);
+		tickData = d3.range(config.majorTicks).map(function() {return 1/config.majorTicks;});
+
+		arc = d3.svg.arc()
+			.innerRadius(r - config.ringWidth - config.ringInset)
+			.outerRadius(r - config.ringInset)
+			.startAngle(function(d, i) {
+				var ratio = d * i;
+				return deg2rad(config.minAngle + (ratio * range));
+			})
+			.endAngle(function(d, i) {
+				var ratio = d * (i+1);
+				return deg2rad(config.minAngle + (ratio * range));
+			});
+	}
+	that.configure = configure;
+
+	function centerTranslation() {
+		return 'translate('+r +','+ r +')';
+	}
+
+	function isRendered() {
+		return (svg !== undefined);
+	}
+	that.isRendered = isRendered;
+
+	function render(newValue) {
+		svg = d3.select(container)
+			.append('svg:svg')
+				.attr('class', 'gauge')
+				.attr('width', config.clipWidth)
+				.attr('height', config.clipHeight);
+
+		var centerTx = centerTranslation();
+
+		var arcs = svg.append('g')
+				.attr('class', 'arc')
+				.attr('transform', centerTx);
+
+		arcs.selectAll('path')
+				.data(tickData)
+			.enter().append('path')
+				.attr('fill', function(d, i) {
+					return config.arcColorFn(d * i);
+				})
+				.attr('d', arc);
+
+		var lg = svg.append('g')
+				.attr('class', 'label')
+				.attr('transform', centerTx);
+		lg.selectAll('text')
+				.data(ticks)
+			.enter().append('text')
+				.attr('transform', function(d) {
+					var ratio = scale(d);
+					var newAngle = config.minAngle + (ratio * range);
+					return 'rotate(' +newAngle +') translate(0,' +(config.labelInset - r) +')';
+				})
+				.text(config.labelFormat);
+
+		var lineData = [ [config.pointerWidth / 2, 0],
+						[0, -pointerHeadLength],
+						[-(config.pointerWidth / 2), 0],
+						[0, config.pointerTailLength],
+						[config.pointerWidth / 2, 0] ];
+		var pointerLine = d3.svg.line().interpolate('monotone');
+		var pg = svg.append('g').data([lineData])
+				.attr('class', 'pointer')
+				.attr('transform', centerTx);
+
+		pointer = pg.append('path')
+			.attr('d', pointerLine/*function(d) { return pointerLine(d) +'Z';}*/ )
+			.attr('transform', 'rotate(' +config.minAngle +')');
+
+		update(newValue === undefined ? 0 : newValue);
+	}
+	that.render = render;
+
+	function update(newValue, newConfiguration) {
+		if ( newConfiguration  !== undefined) {
+			configure(newConfiguration);
+		}
+		var ratio = scale(newValue);
+		var newAngle = config.minAngle + (ratio * range);
+		pointer.transition()
+			.duration(config.transitionMs)
+			.ease('elastic')
+			.attr('transform', 'rotate(' +newAngle +')');
+	}
+	that.update = update;
+
+	configure(configuration);
+
+	return that;
+};
+</script>
+
+<script>
+    var currSent = 0;
+    function getCurrSent() {
+        return currSent;
+    }
+
+    function setCurrSent(newVal) {
+        currSent = newVal;
+    }
+
+    function onDocumentReady() {
+        var powerGauge = gauge('#power-gauge', {
+            size: 500,
+            clipWidth: 500,
+            clipHeight: 300,
+            ringWidth: 125,
+            transitionMs: 4000
+        });
+        powerGauge.render();
+
+        function updateReadings(value) {
+        //just pump in random data here...
+        powerGauge.update(value);
+        }
+
+        setInterval(function() {
+            //updateReadings(Math.random() * .1);
+            updateReadings(currSent);
+        }, 1 * 1000);
+    }
+
+
+
+    if ( !window.isLoaded ) {
+        window.addEventListener("load", function() {
+        onDocumentReady();
+        }, false);
+    } else {
+        onDocumentReady();
+    }
+
+    function loadXMLDoc()
+    {
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function()
+        {
+            if (req.readyState == 4)
+            {
+                if (req.status != 200)
+                {
+                    //error handling code here
+                }
+                else
+                {
+                    var response = JSON.parse(req.responseText);
+                    var currSentiment = response.score;
+                    var numTweets = response.numTweets;
+                    setCurrSent(currSentiment);
+
+                    document.getElementById('subhead').innerHTML = '<h4>Currently analyzing ' + '<font color=\"#A80000\">'
+                        + numTweets + '</font>' + ' tweets over the last 10 minutes. The current sentiment score is ' +
+                        '<font color=\"#A80000\">' + currSentiment + '</font>' + '.</h4>';
+
+                    /*
+                    if (currSentiment > 0)
+                    {
+                        document.getElementById('myDiv').innerHTML = '<font color=\"green\">' + currSentiment + '</font>'
+                    }
+                    else if (currSentiment == 0)
+                    {
+                        document.getElementById('myDiv').innerHTML = '<font color=\"black\">' + currSentiment + '</font>'
+                    }
+                    else
+                    {
+                        document.getElementById('myDiv').innerHTML = '<font color=\"red\">' + currSentiment + '</font>'
+                    } */
+                }
+            }
+        };
+
+        req.open('POST', '/ajax');
+        req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+        var un = document.getElementById('scname').value;
+        var sec = document.getElementById('secret').value;
+        var postVars = 'username='+un+'&secret='+sec;
+        req.send(postVars);
+
+        return false;
+    }
+</script>
+
+<head>
+    <h1>Trump Sentiment Tracker </h1>
+</head>
+
+<body>
+<form action="" method="POST">
+<input type="hidden" name="scname" id="scname">
+<input type="hidden" name="secret" id="secret" value="shhh">
+</form>
+<script>
+    setInterval(function() { loadXMLDoc() }, 5000);
+</script>
+<div id="subhead">
+    <h4>Currently analyzing 0 tweets over the last 10 minutes. The average sentiment score is 0.0000.</h4>
+</div>
+<div id="bar"></div>
+<div id="power-gauge"></div>
+<div style="margin-left:-8px;margin-right:-8px"><hr style="color:Black;background-color:lightgrey;border:0;width:100%;height:1.25px;" /></div>
+<div id="description">
+    <h2>About</h2>
+    <p> The Trump Sentiment Tracker uses <span style="color: #A80000">real-time</span> twitter data to determine the public's <span style="color: #A80000">current perception</span> of President Donald Trump.
+        The web application streams all tweets containing the word 'Trump' within the last ten minutes of being launched. The tweets are then put through <span style="color: #A80000">sentiment analysis</span> in order to determine how postitive or negative they are.
+        Lastly, the sentiment scores are averaged and reported to you using the <span style="color: #A80000">visualization</span> seen above.
+        For best results, keep this tab open for a few minutes and then check it out.</p>
+    <br>
+    <p> My name is <span style="color: #A80000">Conor Dewey</span>. I am currently an undergraduate student at Virgina
+        Tech studying data science. I completed this project in order to further improve my development and design related
+        skill sets. If you're interested in the code itself, feel free to have a look at my <a href="https://github.com/conordewey3/TrumpSentimentTracker"><span style="color: #A80000">Github</span></a>.
+        For more on me and my work, you can head over to my <a href="http://conordewey.com"><span style="color: #A80000">portfolio</span></a> or <a href="https://www.linkedin.com/in/conordewey3/"><span style="color:
+        #A80000">LinkedIn</span></a>. Lastly, if you're interested in data science, machine learning, or AI then go ahead and <a href="https://www.getrevue.co/profile/conordewey3"><span style="color: #A80000">subscribe</span></a>
+        to my weekly newsletter: Self Driven Data Science. Thanks for reading.</p>
+    <br>
+</div>
+</body>
+</html>
+
+
