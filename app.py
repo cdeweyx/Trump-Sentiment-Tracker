@@ -12,7 +12,15 @@ from config import consumer_key, consumer_secret, access_token, access_token_sec
 
 app = Flask(__name__)
 
-#Twitter Credentials
+# Twitter Credentials**
+# Mine are imported from a private file, feel free to plug
+# in yours using the following commented out code:
+
+# consumer_key = 'my consumer key string'
+# consumer_secret = 'my consumer secret string'
+# access_token = 'my access token string'
+# access_token_secret = 'my access token secret'
+
 consumer_key = consumer_key
 consumer_secret = consumer_secret
 access_token = access_token
