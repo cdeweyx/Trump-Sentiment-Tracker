@@ -1,30 +1,23 @@
-# Answer to a question on Flask mailing list
-# http://librelist.com/browser//flask/2012/6/30/using-ajax-with-flask/
-# NOTE: *REALLY* don't do the thing with putting the HTML in a global
-#       variable like I have, I just wanted to keep everything in one
-#       file for the sake of completeness of answer.
-#       It's generally a very bad way to do things :)
-#
 from flask import (Flask, jsonify, render_template)
 from twitter_streamer import StdOutListener
 from tweepy import Stream, OAuthHandler
-from config import consumer_key, consumer_secret, access_token, access_token_secret
+# from config import consumer_key, consumer_secret, access_token, access_token_secret
 
 app = Flask(__name__)
 
 # Twitter Credentials**
 # Mine are imported from a private file, feel free to plug
-# in yours using the following commented out code:
+# in yours using the following code:
 
-# consumer_key = 'my consumer key string'
-# consumer_secret = 'my consumer secret string'
-# access_token = 'my access token string'
-# access_token_secret = 'my access token secret'
+consumer_key = 'my consumer key string'
+consumer_secret = 'my consumer secret string'
+access_token = 'my access token string'
+access_token_secret = 'my access token secret'
 
-consumer_key = consumer_key
-consumer_secret = consumer_secret
-access_token = access_token
-access_token_secret = access_token_secret
+# consumer_key = consumer_key
+# consumer_secret = consumer_secret
+# access_token = access_token
+# access_token_secret = access_token_secret
 
 # OAuth process
 auth = OAuthHandler(consumer_key, consumer_secret)
