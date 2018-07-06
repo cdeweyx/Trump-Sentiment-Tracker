@@ -1,4 +1,4 @@
-# TrumpSentimentTracker
+# Trump Sentiment Tracker
 
 Author: Conor Dewey
 
