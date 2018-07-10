@@ -5,3 +5,6 @@ The Trump Sentiment Tracker uses real-time twitter data to determine the public'
 
 ### See the App
 For the web app itself, check out the following link: https://trump-sentiment-tracker.herokuapp.com
+
+### See the Post
+I posted an article on Medium outlining the process: https://hackernoon.com/how-i-built-trump-sentiment-tracker-355ff87859f9
