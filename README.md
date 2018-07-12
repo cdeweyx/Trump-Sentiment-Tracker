@@ -7,4 +7,6 @@ Trump Sentiment Tracker uses real-time twitter data to determine the public's cu
 [Trump Sentiment Tracker](https://trump-sentiment-tracker.herokuapp.com)
 
 ### See the Post
+I wrote a Medium post on the experience as well. You can find the post and more about the process here: 
+
 [How I Built Trump Sentiment Tracker](https://hackernoon.com/how-i-built-trump-sentiment-tracker-355ff87859f9)
